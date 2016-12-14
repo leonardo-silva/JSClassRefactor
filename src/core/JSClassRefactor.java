@@ -5,17 +5,59 @@
  */
 package core;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 /**
  *
  * @author leonardosilva
  */
 public class JSClassRefactor {
+    private static final int FILE_NAME = 0;
+    private static final int CLASS_NAME = 1;
+    private static final int FUNCTION_NAME = 2;
+    private static final int START_LINE = 3;
+    private static final int END_LINE = 4;
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
-    }
+        String csvFile = args[0];
+        String line = "", lineClass = "";
+        String cvsSplitBy = ",";
+        String lastFileName = null;
+        int lineClassNumber = 0;
+        BufferedReader classBR = null;
+   
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            // The first line (header) is ignored
+            br.readLine();
+            
+            while ((line = br.readLine()) != null) {
+                // use comma as separator
+                String[] es5class = line.split(cvsSplitBy);
+
+                if (lastFileName != es5class[FILE_NAME]) {
+                    lastFileName = es5class[FILE_NAME]; 
+                    classBR = new BufferedReader(new FileReader(lastFileName));
+                    lineClassNumber = 0;
+                }
+                
+                while ((lineClass = classBR.readLine()) != null) {
+                    lineClassNumber++;
+                    if (lineClassNumber >= Integer.parseInt(es5class[START_LINE]) && 
+                            lineClassNumber <= Integer.parseInt(es5class[END_LINE]))
+                        System.out.println(lineClass);
+                }
+                
+                   
+            }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }    
+        }
     
 }
