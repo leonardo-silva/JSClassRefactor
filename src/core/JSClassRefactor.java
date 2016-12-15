@@ -8,6 +8,7 @@ package core;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  *
@@ -27,9 +28,10 @@ public class JSClassRefactor {
         String csvFile = args[0];
         String line = "", lineClass = "";
         String cvsSplitBy = ",";
-        String lastFileName = null;
+        String lastFileName = null, newFileName = null;
         int lineClassNumber = 0;
         BufferedReader classBR = null;
+        PrintWriter writer = null;
    
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             // The first line (header) is ignored
@@ -40,24 +42,59 @@ public class JSClassRefactor {
                 String[] es5class = line.split(cvsSplitBy);
 
                 if (lastFileName != es5class[FILE_NAME]) {
+                    if (classBR != null)
+                        classBR.close();
                     lastFileName = es5class[FILE_NAME]; 
                     classBR = new BufferedReader(new FileReader(lastFileName));
                     lineClassNumber = 0;
+                    // File to be created
+                    if (writer != null)
+                        writer.close();
+                    newFileName = lastFileName.replaceAll(".js","-es6cl.js");
+                    writer = new PrintWriter(newFileName, "UTF-8");
                 }
                 
                 while ((lineClass = classBR.readLine()) != null) {
                     lineClassNumber++;
                     if (lineClassNumber >= Integer.parseInt(es5class[START_LINE]) && 
-                            lineClassNumber <= Integer.parseInt(es5class[END_LINE]))
+                            lineClassNumber <= Integer.parseInt(es5class[END_LINE])) {
+                        // Condition for class constructors
+                        if (es5class[CLASS_NAME] == es5class[FUNCTION_NAME]) {
+                            if (lineClassNumber == Integer.parseInt(es5class[START_LINE])) { 
+                                lineClass = lineClass.replace("function ", "class ");
+                                // constructor keyword
+                                String arguments = lineClass.substring(lineClass.indexOf("("), lineClass.indexOf(")"));
+                                lineClass.replace(arguments, ""); 
+                            }    
+                        } else {
+                            // Methods
+                            
+                        }    
                         System.out.println(lineClass);
+                    }    
+                    // Write into the new file
+                    if (lineClassNumber > 1)  // If it is not the 1st line
+                        writer.println();
+                    writer.print(lineClass);
                 }
                 
                    
             }
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }    
-        }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (classBR != null) {
+                try {
+                    classBR.close();
+                } catch (IOException ce) {
+                    ce.printStackTrace();
+                }
+            }
+            if (writer != null) {
+                writer.close();
+            }
+        }   
+    }
     
 }
