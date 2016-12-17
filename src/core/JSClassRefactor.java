@@ -26,63 +26,52 @@ public class JSClassRefactor {
      */
     public static void main(String[] args) {
         String csvFile = args[0];
-        String line = "", lineClass = "";
-        String cvsSplitBy = ",";
-        String lastFileName = null, newFileName = null;
-        int lineClassNumber = 0;
-        BufferedReader classBR = null;
-        PrintWriter writer = null;
+        String line = "";
    
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             // The first line (header) is ignored
             br.readLine();
             
             while ((line = br.readLine()) != null) {
-                // use comma as separator
-                String[] es5class = line.split(cvsSplitBy);
-
-                if (lastFileName != es5class[FILE_NAME]) {
-                    if (classBR != null)
-                        classBR.close();
-                    lastFileName = es5class[FILE_NAME]; 
-                    classBR = new BufferedReader(new FileReader(lastFileName));
-                    lineClassNumber = 0;
-                    // File to be created
-                    if (writer != null)
-                        writer.close();
-                    newFileName = lastFileName.replaceAll(".js","-es6cl.js");
-                    writer = new PrintWriter(newFileName, "UTF-8");
-                }
-                
-                while ((lineClass = classBR.readLine()) != null) {
-                    lineClassNumber++;
-                    if (lineClassNumber >= Integer.parseInt(es5class[START_LINE]) && 
-                            lineClassNumber <= Integer.parseInt(es5class[END_LINE])) {
-                        // Condition for class constructors
-                        if (es5class[CLASS_NAME] == es5class[FUNCTION_NAME]) {
-                            if (lineClassNumber == Integer.parseInt(es5class[START_LINE])) { 
-                                lineClass = lineClass.replace("function ", "class ");
-                                // constructor keyword
-                                String arguments = lineClass.substring(lineClass.indexOf("("), lineClass.indexOf(")"));
-                                lineClass.replace(arguments, ""); 
-                            }    
-                        } else {
-                            // Methods
-                            
-                        }    
-                        System.out.println(lineClass);
-                    }    
-                    // Write into the new file
-                    if (lineClassNumber > 1)  // If it is not the 1st line
-                        writer.println();
-                    writer.print(lineClass);
-                }
-                
-                   
+                JSClassRefactor.parseClasses(line);   
             }
 
         } catch (IOException e) {
             e.printStackTrace();
+        }   
+    }
+    
+    private static void parseClasses (String line) throws IOException {
+        String cvsSplitBy = ",";
+        String lastFileName = null;
+        BufferedReader classBR = null;
+        PrintWriter writer = null;
+        String newFileName = null;
+        String lineClass = "";
+        int lineClassNumber = 0;
+
+        // use comma as separator
+        String[] es5class = line.split(cvsSplitBy);
+
+        try {
+            if (lastFileName == null || (!lastFileName.equals(es5class[FILE_NAME]))) {
+                if (classBR != null)
+                    classBR.close();
+                lastFileName = es5class[FILE_NAME]; 
+                classBR = new BufferedReader(new FileReader(lastFileName));
+                lineClassNumber = 0;
+                // File to be created
+                if (writer != null)
+                    writer.close();
+                newFileName = lastFileName.replaceAll(".js","-es6cl.js");
+                writer = new PrintWriter(newFileName, "UTF-8");
+            }
+            
+            if (classBR != null) {
+                while ((lineClass = classBR.readLine()) != null) {
+                    lineClassNumber = JSClassRefactor.parseEachClass(lineClass, lineClassNumber, es5class, writer);   
+                }
+            }    
         } finally {
             if (classBR != null) {
                 try {
@@ -94,7 +83,34 @@ public class JSClassRefactor {
             if (writer != null) {
                 writer.close();
             }
-        }   
+        }        
+        
     }
-    
+
+    private static int parseEachClass (String lineClass, int lineClassNumber, String[] es5class, PrintWriter writer) throws IOException {
+        lineClassNumber++;
+        if (lineClassNumber >= Integer.parseInt(es5class[START_LINE]) && 
+                lineClassNumber <= Integer.parseInt(es5class[END_LINE])) {
+            // Condition for class constructors
+            if (es5class[CLASS_NAME].equals(es5class[FUNCTION_NAME])) {
+                if (lineClassNumber == Integer.parseInt(es5class[START_LINE])) { 
+                    lineClass = lineClass.replace("function ", "class ");
+                    String arguments;
+                    arguments = lineClass.substring(lineClass.indexOf("("), lineClass.indexOf(")")+1);
+                    lineClass = lineClass.replace(arguments, ""); 
+                }    
+            } else {
+                // Methods
+
+            }    
+            System.out.println(lineClass);
+        }    
+        // Write into the new file
+        if (lineClassNumber > 1)  // If it is not the 1st line
+            writer.println();
+        writer.print(lineClass);
+        
+        return lineClassNumber;
+    }
+
 }
