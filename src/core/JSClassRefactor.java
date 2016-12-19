@@ -94,9 +94,10 @@ public class JSClassRefactor {
             // Condition for class constructors
             if (es5class[CLASS_NAME].equals(es5class[FUNCTION_NAME])) {
                 if (lineClassNumber == Integer.parseInt(es5class[START_LINE])) { 
-                    lineClass = lineClass.replace("function ", "class ");
                     String arguments;
-                    arguments = lineClass.substring(lineClass.indexOf("("), lineClass.indexOf(")")+1);
+                    arguments = util.Utils.argumentsBetweenParentesis(lineClass);
+                    // Changing text
+                    lineClass = lineClass.replace("function ", "class ");
                     lineClass = lineClass.replace(arguments, ""); 
                 }    
             } else {
