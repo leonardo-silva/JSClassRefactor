@@ -6,7 +6,6 @@
 package core;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -33,7 +32,7 @@ public class JSClassRefactor {
         String csvFile = args[0];
         String line = "";
         
-        JSClassRefactor.indentation = readIndentationPreference();
+        JSClassRefactor.indentation = readIndentationPreference("./refactorconfig.ini");
    
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             // The first line (header) is ignored
@@ -100,28 +99,8 @@ public class JSClassRefactor {
                 lineClassNumber <= Integer.parseInt(es5class[END_LINE])) {
             // Condition for class constructors
             if (es5class[CLASS_NAME].equals(es5class[FUNCTION_NAME])) {
-                if (lineClassNumber == Integer.parseInt(es5class[START_LINE])) { 
-                    String arguments;
-                    arguments = util.Utils.argumentsBetweenParentesis(lineClass);
-                    // Changing text
-                    lineClass = lineClass.replace("function ", "class ");
-                    lineClass = lineClass.replace(arguments, ""); 
-                    // Write into the new file
-                    if (lineClassNumber > 1)  // If it is not the 1st line
-                        writer.println();
-                    writer.println(lineClass);
-                    writer.print(JSClassRefactor.indentation + "constructor" + arguments + "{");
-                } else {
-                    // Closing curly brackets at the end of the class constructor
-                    if (lineClassNumber == Integer.parseInt(es5class[END_LINE])) { 
-                        writer.println();
-                        writer.println(JSClassRefactor.indentation + "}");
-                        writer.print(lineClass);
-                    } else {
-                        writer.println();
-                        writer.print(JSClassRefactor.indentation + lineClass);
-                    }
-                }   
+                JSClassRefactor.migrateConstructorFunction(lineClass, lineClassNumber, 
+                        Integer.parseInt(es5class[START_LINE]), Integer.parseInt(es5class[END_LINE]), writer);
             } else {
                 // Methods
                 writer.println();
@@ -139,19 +118,21 @@ public class JSClassRefactor {
         return lineClassNumber;
     }
 
-    public static String readIndentationPreference() {
+    public static String readIndentationPreference(String iniFileName) {
         String indentationSequence = "";
         Wini ini;
         try {
-            ini = new Wini(new FileReader("./refactorconfig.ini"));
+            ini = new Wini(new FileReader(iniFileName));
             String type = ini.get("indentation", "type");
-            if (type.equals("spaces")) {
-                int size = ini.get("indentation", "size", int.class);
-                for(int i=0;i<size;i++)
-                    indentationSequence += " ";
-            } else {
-                indentationSequence = ""+'\t';
-            }
+            if (type != null) {
+                if (type.equals("spaces")) {
+                    int size = ini.get("indentation", "size", int.class);
+                    for(int i=0;i<size;i++)
+                        indentationSequence += " ";
+                } else {
+                    indentationSequence = ""+'\t';
+                }
+            }    
         } catch (IOException ex) {
             Logger.getLogger(JSClassRefactor.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -159,4 +140,34 @@ public class JSClassRefactor {
         return indentationSequence;   
     }
 
+    public static void migrateConstructorFunction(String lineClass, int lineClassNumber, 
+                        int startLine, int endLine, PrintWriter writer) {
+        String[] contentToWrite = new String[8];
+        
+        if (lineClassNumber == startLine) { 
+            String arguments;
+            arguments = util.Utils.argumentsBetweenParentesis(lineClass);
+            // Changing text
+            lineClass = lineClass.replace("function ", "class ");
+            lineClass = lineClass.replace(arguments, ""); 
+            // Write into the new file
+            if (lineClassNumber > 1) { // If it is not the 1st line
+                //writer.println();
+                contentToWrite[0] = "/n";
+            }    
+            //writer.println(lineClass);
+            //contentToWrite[1] = 
+            writer.print(JSClassRefactor.indentation + "constructor" + arguments + "{");
+        } else {
+            // Closing curly brackets at the end of the class constructor
+            if (lineClassNumber == endLine) { 
+                writer.println();
+                writer.println(JSClassRefactor.indentation + "}");
+                writer.print(lineClass);
+            } else {
+                writer.println();
+                writer.print(JSClassRefactor.indentation + lineClass);
+            }
+        }   
+    }
 }

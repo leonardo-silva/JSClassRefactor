@@ -5,6 +5,7 @@
  */
 package core;
 
+import java.io.PrintWriter;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,8 +43,25 @@ public class JSClassRefactorTest {
     @Test
     public void testreadIndentationPreference() {
         System.out.println("Testing readIndentationPreference...");
-        String result = JSClassRefactor.readIndentationPreference();
+        String result = JSClassRefactor.readIndentationPreference("./test/core/refactorconfig2spaces.ini");
         assertEquals("  ", result);
+        result = JSClassRefactor.readIndentationPreference("./test/core/refactorconfig4spaces.ini");
+        assertEquals("    ", result);
+        result = JSClassRefactor.readIndentationPreference("./test/core/refactorconfigtab.ini");
+        assertEquals(""+'\t', result);
+        result = JSClassRefactor.readIndentationPreference("./test/core/refactorconfigerror.ini");
+        assertEquals("", result);
     }
     
+    @Test
+    public void testmigrateConstructorFunction() {
+        System.out.println("Testing migrateConstructorFunction...");
+        String lineClass;
+        int lineClassNumber, startLine, endLine;
+        PrintWriter writer;
+        // 
+        
+        
+        
+    }
 }
