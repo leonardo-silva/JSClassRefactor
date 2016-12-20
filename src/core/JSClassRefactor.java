@@ -6,9 +6,13 @@
 package core;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.ini4j.Wini;
 
 /**
  *
@@ -20,6 +24,7 @@ public class JSClassRefactor {
     private static final int FUNCTION_NAME = 2;
     private static final int START_LINE = 3;
     private static final int END_LINE = 4;
+    private static String indentation; 
 
     /**
      * @param args the command line arguments
@@ -27,6 +32,8 @@ public class JSClassRefactor {
     public static void main(String[] args) {
         String csvFile = args[0];
         String line = "";
+        
+        JSClassRefactor.indentation = readIndentationPreference();
    
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             // The first line (header) is ignored
@@ -99,19 +106,57 @@ public class JSClassRefactor {
                     // Changing text
                     lineClass = lineClass.replace("function ", "class ");
                     lineClass = lineClass.replace(arguments, ""); 
-                }    
+                    // Write into the new file
+                    if (lineClassNumber > 1)  // If it is not the 1st line
+                        writer.println();
+                    writer.println(lineClass);
+                    writer.print(JSClassRefactor.indentation + "constructor" + arguments + "{");
+                } else {
+                    // Closing curly brackets at the end of the class constructor
+                    if (lineClassNumber == Integer.parseInt(es5class[END_LINE])) { 
+                        writer.println();
+                        writer.println(JSClassRefactor.indentation + "}");
+                        writer.print(lineClass);
+                    } else {
+                        writer.println();
+                        writer.print(JSClassRefactor.indentation + lineClass);
+                    }
+                }   
             } else {
                 // Methods
+                writer.println();
+                writer.print(lineClass);
 
             }    
             System.out.println(lineClass);
+        } else {
+            // Write into the new file
+            if (lineClassNumber > 1)  // If it is not the 1st line
+                writer.println();
+            writer.print(lineClass);
         }    
-        // Write into the new file
-        if (lineClassNumber > 1)  // If it is not the 1st line
-            writer.println();
-        writer.print(lineClass);
         
         return lineClassNumber;
+    }
+
+    public static String readIndentationPreference() {
+        String indentationSequence = "";
+        Wini ini;
+        try {
+            ini = new Wini(new FileReader("./refactorconfig.ini"));
+            String type = ini.get("indentation", "type");
+            if (type.equals("spaces")) {
+                int size = ini.get("indentation", "size", int.class);
+                for(int i=0;i<size;i++)
+                    indentationSequence += " ";
+            } else {
+                indentationSequence = ""+'\t';
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(JSClassRefactor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return indentationSequence;   
     }
 
 }
