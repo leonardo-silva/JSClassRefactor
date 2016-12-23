@@ -5,6 +5,7 @@
  */
 package core;
 
+import static core.JSClassRefactor.readIndentationPreference;
 import java.io.PrintWriter;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -55,13 +56,23 @@ public class JSClassRefactorTest {
     
     @Test
     public void testmigrateConstructorFunction() {
-        System.out.println("Testing migrateConstructorFunction...");
-        String lineClass;
-        int lineClassNumber, startLine, endLine;
-        PrintWriter writer;
-        // 
-        
-        
-        
+        System.out.println("Testing migrateConstructorFunction part 1...");
+        String[] contentToWrite;
+        //String indentation 
+        JSClassRefactor.indentation = readIndentationPreference("./refactorconfig.ini");
+        // Tests
+        contentToWrite = JSClassRefactor.migrateConstructorFunction("function Point (x, y) {", 5, 5, 8);
+        assertEquals("\n", contentToWrite[0]);
+        assertEquals("class Point {"+"\n", contentToWrite[1]);
+        assertEquals(JSClassRefactor.indentation + "constructor(x, y) {", contentToWrite[2]);
+        System.out.println("Testing migrateConstructorFunction part 2...");
+        contentToWrite = JSClassRefactor.migrateConstructorFunction("    this.x = x;", 6, 5, 8);
+        assertEquals("\n", contentToWrite[0]);
+        assertEquals(JSClassRefactor.indentation +"    this.x = x;", contentToWrite[1]);
+        System.out.println("Testing migrateConstructorFunction part 3...");
+        contentToWrite = JSClassRefactor.migrateConstructorFunction("}", 8, 5, 8);
+        assertEquals("\n", contentToWrite[0]);
+        assertEquals(JSClassRefactor.indentation +"}\n", contentToWrite[1]);
+        assertEquals("}", contentToWrite[2]);
     }
 }
