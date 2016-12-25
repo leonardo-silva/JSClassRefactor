@@ -55,10 +55,7 @@ public class JSClassRefactor {
                     if (lastFileName == null || (!lastFileName.equals(es5class[FILE_NAME]))) {
                         if (classBR != null) {
                             // Copy the rest of the file
-                            while ((lineClass = classBR.readLine()) != null) {
-                                writer.println();
-                                writer.print(lineClass);
-                            }
+                            copyTheRestOfTheLines(lineClass, writer, classBR);
                             // Close the file
                             classBR.close();
                         }    
@@ -208,6 +205,16 @@ public class JSClassRefactor {
     private static void writeStringArrayToFile(String[] contentToWrite, PrintWriter writer) {
         for(int i = 0; ! contentToWrite[i].equals(END_OF_STRING);i++) {
             writer.print(contentToWrite[i]);
+        }
+    }
+
+    private static void copyTheRestOfTheLines(String lineClass, PrintWriter writer, BufferedReader classBR) 
+            throws IOException {
+        while (lineClass != null) {
+            writer.println();
+            writer.print(lineClass);
+
+            lineClass = classBR.readLine();
         }
     }
 }
