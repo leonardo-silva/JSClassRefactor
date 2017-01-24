@@ -32,7 +32,7 @@ public class JSClassRefactor {
      */
     public static void main(String[] args) {
         String csvFile = args[0];
-        String line = "";
+/*        String line = "";
         BufferedReader classBR = null;
         PrintWriter writer = null;
         String cvsSplitBy = ",";
@@ -40,10 +40,13 @@ public class JSClassRefactor {
         String newFileName = null;
         String lineClass = "";
         int lineClassNumber = 0;
-        
+  */      
         JSClassRefactor.indentation = readIndentationPreference("./refactorconfig.ini");
+        
+        generateClasses(csvFile);
+        mixClassesAndFunctions(csvFile);
    
-        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+ /*       try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             // The first line (header) is ignored
             br.readLine();
 
@@ -97,9 +100,209 @@ public class JSClassRefactor {
 
         } catch (IOException e) {
             e.printStackTrace();
+        } 
+        */
+    }
+
+    /**
+     * Generate the class structures (ES5 -> ES6 syntax)
+     */
+    public static void generateClasses(String csvFile) {
+        String line = "";
+        BufferedReader classBR = null;
+        PrintWriter writer = null;
+        String cvsSplitBy = ",";
+        String lastFileName = null, lastClassName = null;
+        String newFileName = null;
+        String lineClass = "";
+        int lineClassNumber = 0;
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            // The first line (header) is ignored
+            br.readLine();
+
+            try {
+                while ((line = br.readLine()) != null) {
+                    // use comma as separator
+                    String[] es5class = line.split(cvsSplitBy);
+
+                    if (lastFileName == null || (!lastFileName.equals(es5class[FILE_NAME]))) {
+                        if (classBR != null) {
+                            // Copy the rest of the file
+                            //copyTheRestOfTheLines(lineClass, writer, classBR);
+                            // Close the file
+                            classBR.close();
+                        }    
+                        lastFileName = es5class[FILE_NAME]; 
+                        classBR = new BufferedReader(new FileReader(lastFileName));
+                        lineClassNumber = 0;
+                        // File to be created
+                        if (writer != null) {
+                            writeClassEnding(lastClassName, writer);
+                            writer.close();
+                        }    
+                        lastClassName = es5class[CLASS_NAME];
+                        newFileName = lastFileName.replaceAll(".js","-es6classes.js");
+                        writer = new PrintWriter(newFileName, "UTF-8");
+                    } else {
+                        if (!lastClassName.equals(es5class[CLASS_NAME])) {
+                            writeClassEnding(lastClassName, writer);
+                            lastClassName = es5class[CLASS_NAME];
+                        }
+                        // Treat the last lineClass
+                        //if (lineClassNumber == Integer.parseInt(es5class[START_LINE])) {
+                        //   JSClassRefactor.parseEachClass(lineClass, lineClassNumber, es5class, writer); 
+                        //} else {
+                            // Just copy the line
+                            //writer.println();
+                            //writer.print(lineClass);
+                        //}
+                    }
+
+                    if (classBR != null) {
+                        lineClassNumber++;
+                        lineClass = classBR.readLine();
+                        while ((lineClass != null) && 
+                                lineClassNumber <= Integer.parseInt(es5class[END_LINE])) {
+                            JSClassRefactor.parseEachClass(lineClass, lineClassNumber, es5class, writer);   
+
+                            lineClassNumber++;
+                            lineClass = classBR.readLine();
+                        }
+                    }    
+                }
+            } finally {
+                if (classBR != null) {
+                    classBR.close();
+                }
+                if (writer != null) {
+                    writeClassEnding(lastClassName, writer);
+                    writer.close();
+                }
+            }        
+                
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }   
     }
 
+    /**
+     * Generate the class structures (ES5 -> ES6 syntax)
+     */
+    public static void mixClassesAndFunctions(String csvFile) {
+        String line = "";
+        BufferedReader es5BR = null;
+        BufferedReader es6classesBR = null;
+        PrintWriter writer = null;
+        String cvsSplitBy = ",";
+        String lastFileName = null;
+        String newFileName = null;
+        String classFileName = null;
+        String lineClass = "";
+        int lineClassNumber = 0;
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            // The first line (header) is ignored
+            br.readLine();
+
+            try {
+                while ((line = br.readLine()) != null) {
+                    // use comma as separator
+                    String[] es5class = line.split(cvsSplitBy);
+
+                    if (lastFileName == null || (!lastFileName.equals(es5class[FILE_NAME]))) {
+                        if (es5BR != null) {
+                            // Copy the rest of the file
+                            copyTheRestOfTheLines(lineClass, writer, es5BR);
+                            // Close the file
+                            es5BR.close();
+                        }    
+                        lastFileName = es5class[FILE_NAME]; 
+                        es5BR = new BufferedReader(new FileReader(lastFileName));
+                        lineClassNumber = 0;
+                        // Class file
+                        if (es6classesBR != null) {
+                            // Close the file
+                            es6classesBR.close();
+                        }    
+                        classFileName = lastFileName.replaceAll(".js","-es6classes.js");
+                        es6classesBR = new BufferedReader(new FileReader(classFileName));
+                        // File to be created
+                        if (writer != null)
+                            writer.close();
+                        newFileName = lastFileName.replaceAll(".js","-es6final.js");
+                        writer = new PrintWriter(newFileName, "UTF-8");
+                    }
+
+                    if (es5BR != null) {
+                        while ((lineClass = es5BR.readLine()) != null) {
+                            if (lineClassNumber >= Integer.parseInt(es5class[START_LINE]) &&
+                                 lineClassNumber <= Integer.parseInt(es5class[END_LINE])   ) {
+                                JSClassRefactor.copyClassStructure(lineClass, lineClassNumber, es5class, writer, es6classesBR);
+                            } else {
+                                // Just copy the line
+                                writer.println();
+                                writer.print(lineClass);
+                            }
+                        }
+                    }    
+                }
+            } finally {
+                if (es5BR != null) {
+                    es5BR.close();
+                }
+                if (es6classesBR != null) {
+                    es6classesBR.close();
+                }
+                if (writer != null) {
+                    writer.close();
+                }
+            }        
+                
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }   
+    }
+
+    private static void parseEachClass (String lineClass, int lineClassNumber, String[] es5class, 
+            PrintWriter writer) throws IOException {
+        String[] contentToWrite;
+        
+//        lineClassNumber++;
+        // Condition for class constructors
+        if (es5class[CLASS_NAME].equals(es5class[FUNCTION_NAME])) {
+            if (lineClassNumber >= Integer.parseInt(es5class[START_LINE]) && 
+                    lineClassNumber <= Integer.parseInt(es5class[END_LINE])) {
+                contentToWrite = JSClassRefactor.migrateConstructorFunction(lineClass, lineClassNumber, 
+                        Integer.parseInt(es5class[START_LINE]), Integer.parseInt(es5class[END_LINE]));
+                // Write strings to a file
+                JSClassRefactor.writeStringArrayToFile(contentToWrite, writer);
+            //} else {
+                // Write the lines (any) that come before the class constructor
+              //  if (lineClassNumber > 1)  // If it is not the 1st line
+                //    writer.println();
+               // writer.print(lineClass);
+            }    
+        } else {
+            if (lineClassNumber >= Integer.parseInt(es5class[START_LINE]) && 
+                    lineClassNumber <= Integer.parseInt(es5class[END_LINE])) {
+                // Methods
+                contentToWrite = JSClassRefactor.migrateMethods(lineClass, lineClassNumber, es5class);
+                // Write strings to a file
+                JSClassRefactor.writeStringArrayToFile(contentToWrite, writer);
+                //writer.println();
+                //writer.print(JSClassRefactor.indentation + lineClass);
+            } else {
+                // Do not do anything until the class structure is complete
+            }  
+        }    
+        
+        //return lineClassNumber;
+    }
+
+/*    
     private static int parseEachClass (String lineClass, int lineClassNumber, String[] es5class, PrintWriter writer) throws IOException {
         String[] contentToWrite;
         
@@ -128,6 +331,7 @@ public class JSClassRefactor {
         
         return lineClassNumber;
     }
+*/
 
     public static String readIndentationPreference(String iniFileName) {
         String indentationSequence = "";
@@ -185,8 +389,8 @@ public class JSClassRefactor {
                 contentToWrite[numberOfStringsToWrite] = JSClassRefactor.indentation + "}" + NEW_LINE;
                 numberOfStringsToWrite++;
                 //writer.print(lineClass);
-                contentToWrite[numberOfStringsToWrite] = lineClass;
-                numberOfStringsToWrite++;
+                //contentToWrite[numberOfStringsToWrite] = lineClass;
+                //numberOfStringsToWrite++;
             } else {
                 //writer.println();
                 contentToWrite[numberOfStringsToWrite] = NEW_LINE;
@@ -195,6 +399,42 @@ public class JSClassRefactor {
                 contentToWrite[numberOfStringsToWrite] = JSClassRefactor.indentation + lineClass;
                 numberOfStringsToWrite++;
             }
+        }   
+        // End of the array
+        contentToWrite[numberOfStringsToWrite] = END_OF_STRING;  
+
+        return contentToWrite;
+    }
+
+    public static String[] migrateMethods(String lineClass, int lineClassNumber, 
+                         String[] es5class) {
+        // This method does not generated more than 8 strings
+        String[] contentToWrite = new String[8];
+        int numberOfStringsToWrite = 0;
+        int startLine = Integer.parseInt(es5class[START_LINE]);
+        //int endLine = Integer.parseInt(es5class[END_LINE]);
+        String functionName = es5class[FUNCTION_NAME];
+        
+        if (lineClassNumber == startLine) { 
+            String arguments;
+            arguments = util.Utils.argumentsBetweenParentesis(lineClass);
+            // Changing text
+            lineClass = functionName + arguments + " {";
+            // Write into the new file
+            if (lineClassNumber > 1) { // If it is not the 1st line
+                //writer.println();
+                contentToWrite[numberOfStringsToWrite] = NEW_LINE;
+                numberOfStringsToWrite++;
+            }    
+            //writer.println(lineClass);
+            contentToWrite[numberOfStringsToWrite] = JSClassRefactor.indentation + lineClass;
+            numberOfStringsToWrite++;
+        } else {
+            contentToWrite[numberOfStringsToWrite] = NEW_LINE;
+            numberOfStringsToWrite++;
+            //writer.print(JSClassRefactor.indentation + lineClass);
+            contentToWrite[numberOfStringsToWrite] = JSClassRefactor.indentation + lineClass;
+            numberOfStringsToWrite++;
         }   
         // End of the array
         contentToWrite[numberOfStringsToWrite] = END_OF_STRING;  
@@ -215,6 +455,29 @@ public class JSClassRefactor {
             writer.print(lineClass);
 
             lineClass = classBR.readLine();
+        }
+    }
+
+    private static void writeClassEnding(String lastClassName, PrintWriter writer) {
+        writer.println();
+        writer.print("} // end of class " + lastClassName);
+    }
+
+    private static void copyClassStructure(String lineClass, int lineClassNumber, 
+            String[] es5class, PrintWriter writer, BufferedReader es6classesBR)
+        throws IOException {
+        
+        String lineClassFile = es6classesBR.readLine();
+        boolean classFound = false;
+
+        while (lineClassFile != null || classFound) {
+            // Look for class structure
+        
+            lineClassFile = es6classesBR.readLine();
+            if (lineClassFile.contains("end of class " + es5class[CLASS_NAME])) {
+                ///// WRITE {
+                classFound = true;
+            }    
         }
     }
 }

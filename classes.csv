@@ -1,5 +1,6 @@
-File,Class,Function,startLine,endLine
-./example/figures.js,Point,Point,5,8
-./example/figures.js,Point,getX,15,17
-./example/line.js,Line,Line,5,8
-./example/line.js,Line,getP1,11,13
+file,class,function,startLine,endLine,type
+./example/figures.js,Point,Point,5,8,constructor
+./example/figures.js,Point,getX,15,17,method
+./example/figures.js,Point,setX,20,22,method
+./example/line.js,Line,Line,5,8,constructor
+./example/line.js,Line,getP1,11,13,method
