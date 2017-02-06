@@ -61,16 +61,16 @@ public class JSClassRefactorTest {
         //String indentation 
         JSClassRefactor.indentation = readIndentationPreference("./refactorconfig.ini");
         // Tests
-        contentToWrite = JSClassRefactor.migrateConstructorFunction("function Point (x, y) {", 5, 5, 8);
+        contentToWrite = JSClassRefactor.migrateConstructorFunction("function Point (x, y) {", 5, 5, 8, "");
         assertEquals("\n", contentToWrite[0]);
         assertEquals("class Point {"+"\n", contentToWrite[1]);
         assertEquals(JSClassRefactor.indentation + "constructor(x, y) {", contentToWrite[2]);
         System.out.println("Testing migrateConstructorFunction part 2...");
-        contentToWrite = JSClassRefactor.migrateConstructorFunction("    this.x = x;", 6, 5, 8);
+        contentToWrite = JSClassRefactor.migrateConstructorFunction("    this.x = x;", 6, 5, 8, "");
         assertEquals("\n", contentToWrite[0]);
         assertEquals(JSClassRefactor.indentation +"    this.x = x;", contentToWrite[1]);
         System.out.println("Testing migrateConstructorFunction part 3...");
-        contentToWrite = JSClassRefactor.migrateConstructorFunction("}", 8, 5, 8);
+        contentToWrite = JSClassRefactor.migrateConstructorFunction("}", 8, 5, 8, "");
         assertEquals("\n", contentToWrite[0]);
         assertEquals(JSClassRefactor.indentation +"}\n", contentToWrite[1]);
         //assertEquals("}", contentToWrite[2]);

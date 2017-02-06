@@ -18,7 +18,7 @@ Point.prototype.getX = function() {
 
 // Method setX() 
 Point.prototype.setX = function(x) {
-    return this.x = x;
+    this.x = x;
 }
 
 // Point 3D
@@ -27,5 +27,13 @@ function Point3D (x, y, z) {
 	this.z = z;
 }
 Point3D.prototype = new Point();
+
+Point3D.prototype.getX = function() {
+    return Point.getX.call(this);
+}
+
+Point3D.prototype.setX = function(x) {
+    Point.setX.call(this, x);
+}
 
 function test() {}

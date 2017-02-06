@@ -1,7 +1,9 @@
-file,class,function,startLine,endLine,type,parent
-./example/figures.js,Point,Point,5,8,constructor,
-./example/figures.js,Point,getX,15,17,method,
-./example/figures.js,Point,setX,20,22,method,
-./example/figures.js,Point3D,Point3D,25,28,constructor,Point
-./example/line.js,Line,Line,5,8,constructor,
-./example/line.js,Line,getP1,11,13,method,
+file,class,function,startLine,endLine,parent,type
+./example/figures.js,Point,Point,5,8,,constructor
+./example/figures.js,Point,getX,15,17,,method
+./example/figures.js,Point,setX,20,22,,method
+./example/figures.js,Point3D,Point3D,25,28,Point,constructor
+./example/figures.js,Point3D,getX,31,33,Point,method
+./example/figures.js,Point3D,setX,35,37,Point,method
+./example/line.js,Line,Line,5,8,,constructor
+./example/line.js,Line,getP1,11,13,,method

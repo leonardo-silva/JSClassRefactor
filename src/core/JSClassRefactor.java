@@ -23,6 +23,7 @@ public class JSClassRefactor {
     private static final int FUNCTION_NAME = 2;
     private static final int START_LINE = 3;
     private static final int END_LINE = 4;
+    private static final int PARENT_NAME = 5;
     private static final String END_OF_STRING = "\0";
     private static final String NEW_LINE = "\n";
     public static String indentation; 
@@ -229,7 +230,8 @@ public class JSClassRefactor {
             if (lineClassNumber >= Integer.parseInt(es5class[START_LINE]) && 
                     lineClassNumber <= Integer.parseInt(es5class[END_LINE])) {
                 contentToWrite = JSClassRefactor.migrateConstructorFunction(lineClass, lineClassNumber, 
-                        Integer.parseInt(es5class[START_LINE]), Integer.parseInt(es5class[END_LINE]));
+                        Integer.parseInt(es5class[START_LINE]), Integer.parseInt(es5class[END_LINE]),
+                        es5class[PARENT_NAME]);
                 // Write strings to a file
                 JSClassRefactor.writeStringArrayToFile(contentToWrite, writer);
             //} else {
@@ -255,37 +257,6 @@ public class JSClassRefactor {
         //return lineClassNumber;
     }
 
-/*    
-    private static int parseEachClass (String lineClass, int lineClassNumber, String[] es5class, PrintWriter writer) throws IOException {
-        String[] contentToWrite;
-        
-        lineClassNumber++;
-        if (lineClassNumber >= Integer.parseInt(es5class[START_LINE]) && 
-                lineClassNumber <= Integer.parseInt(es5class[END_LINE])) {
-            // Condition for class constructors
-            if (es5class[CLASS_NAME].equals(es5class[FUNCTION_NAME])) {
-                contentToWrite = JSClassRefactor.migrateConstructorFunction(lineClass, lineClassNumber, 
-                        Integer.parseInt(es5class[START_LINE]), Integer.parseInt(es5class[END_LINE]));
-                // Write strings to a file
-                JSClassRefactor.writeStringArrayToFile(contentToWrite, writer);
-            } else {
-                // Methods
-                writer.println();
-                writer.print(lineClass);
-
-            }    
-            System.out.println(lineClass);
-        } else {
-            // Write into the new file
-            if (lineClassNumber > 1)  // If it is not the 1st line
-                writer.println();
-            writer.print(lineClass);
-        }    
-        
-        return lineClassNumber;
-    }
-*/
-
     public static String readIndentationPreference(String iniFileName) {
         String indentationSequence = "";
         Wini ini;
@@ -309,7 +280,7 @@ public class JSClassRefactor {
     }
 
     public static String[] migrateConstructorFunction(String lineClass, int lineClassNumber, 
-                        int startLine, int endLine) {
+                        int startLine, int endLine, String parentClassName) {
         // This method does not generated more than 8 strings
         String[] contentToWrite = new String[8];
         int numberOfStringsToWrite = 0;
@@ -319,7 +290,10 @@ public class JSClassRefactor {
             arguments = util.Utils.argumentsBetweenParentesis(lineClass);
             // Changing text
             lineClass = lineClass.replace("function ", "class ");
-            lineClass = lineClass.replace(arguments, ""); 
+            if (parentClassName.isEmpty())
+                lineClass = lineClass.replace(arguments, "");
+            else            
+                lineClass = lineClass.replace(arguments, "extends " + parentClassName + " ");
             // Write into the new file
             if (lineClassNumber > 1) { // If it is not the 1st line
                 //writer.println();
@@ -345,6 +319,12 @@ public class JSClassRefactor {
                 //contentToWrite[numberOfStringsToWrite] = lineClass;
                 //numberOfStringsToWrite++;
             } else {
+                if (parentClassName.isEmpty()) {
+                } else {
+                    lineClass = lineClass.replace(parentClassName + ".call(this, ", "super(");
+                    lineClass = lineClass.replace(parentClassName + ".call(this,", "super(");
+                    lineClass = lineClass.replace(parentClassName + ".call(this", "super(");
+                }
                 //writer.println();
                 contentToWrite[numberOfStringsToWrite] = NEW_LINE;
                 numberOfStringsToWrite++;
@@ -383,6 +363,15 @@ public class JSClassRefactor {
             contentToWrite[numberOfStringsToWrite] = JSClassRefactor.indentation + lineClass;
             numberOfStringsToWrite++;
         } else {
+            if (es5class[PARENT_NAME].isEmpty()) {
+            } else {
+                lineClass = lineClass.replace(es5class[PARENT_NAME] + "." + es5class[FUNCTION_NAME] + 
+                        ".call(this, ", "super." + es5class[FUNCTION_NAME] + "(");
+                lineClass = lineClass.replace(es5class[PARENT_NAME] + "." + es5class[FUNCTION_NAME] + 
+                        ".call(this,", "super." + es5class[FUNCTION_NAME] + "(");
+                lineClass = lineClass.replace(es5class[PARENT_NAME] + "." + es5class[FUNCTION_NAME] + 
+                        ".call(this", "super." + es5class[FUNCTION_NAME] + "(");
+            }
             contentToWrite[numberOfStringsToWrite] = NEW_LINE;
             numberOfStringsToWrite++;
             //writer.print(JSClassRefactor.indentation + lineClass);
@@ -423,7 +412,7 @@ public class JSClassRefactor {
 
         while (lineClassFile != null && !classFound) {
             // Look for class structure
-            if (!startWriting && lineClassFile.contains("class " + es5class[CLASS_NAME] + " {"))
+            if (!startWriting && lineClassFile.contains("class " + es5class[CLASS_NAME] + " "))
                 startWriting = true;
             
             if (startWriting) {
