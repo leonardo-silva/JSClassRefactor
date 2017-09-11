@@ -1,21 +1,10 @@
-# README #
+# JSClassRefactor #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+A tool to migrate class-like structures in legacy JavaScript code to use the new syntax for classes introduced by ECMAScript 6.
 
-### What is this repository for? ###
+<p><strong>Example of code migrated by JSClassRefactor</strong></p>
 
-* Migrate JS classes to ES6 syntax
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
-
-### How do I get set up? ###
-
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+![alt text](https://github.com/leonardo-silva/JSClassRefactor/blob/master/example/TheGoodParts-CodeBeforeAfter.png "Migrated Code")
 
 ### Contribution guidelines ###
 
